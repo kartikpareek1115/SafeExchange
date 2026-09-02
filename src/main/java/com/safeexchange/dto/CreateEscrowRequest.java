@@ -8,9 +8,6 @@ import java.math.BigDecimal;
 
 public record CreateEscrowRequest(
 
-        @NotBlank(message = "Seller username is required")
-        String sellerUsername,
-
         @NotBlank(message = "Asset name is required")
         String assetName,
 

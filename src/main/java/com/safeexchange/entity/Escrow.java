@@ -22,7 +22,7 @@ public class Escrow {
     private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "buyer_id", nullable = false)
+    @JoinColumn(name = "buyer_id", nullable = true)
     private User buyer;
 
     @ManyToOne(fetch = FetchType.LAZY)
@@ -46,7 +46,7 @@ public class Escrow {
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     @Builder.Default
-    private EscrowStatus status = EscrowStatus.CREATED;
+    private EscrowStatus status = EscrowStatus.LISTED;
 
     @Column(nullable = false, updatable = false)
     private LocalDateTime createdAt;

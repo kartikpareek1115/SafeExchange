@@ -12,6 +12,8 @@ import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 
+import java.util.List;
+
 @RestController
 @RequestMapping("/api/escrow")
 @RequiredArgsConstructor
@@ -25,6 +27,22 @@ public class EscrowController {
                                                        Authentication authentication) {
         EscrowResponse response = escrowService.createEscrow(authentication.getName(), request);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
+    }
+
+    @GetMapping
+    public ResponseEntity<List<EscrowResponse>> getAvailableListings() {
+        return ResponseEntity.ok(escrowService.getAvailableListings());
+    }
+
+    @GetMapping("/{id}")
+    public ResponseEntity<EscrowResponse> getEscrow(@PathVariable Long id) {
+        return ResponseEntity.ok(escrowService.getEscrow(id));
+    }
+
+    @PostMapping("/{id}/claim")
+    public ResponseEntity<EscrowResponse> claimEscrow(@PathVariable Long id, Authentication authentication) {
+        EscrowResponse response = escrowService.claimEscrow(id, authentication.getName());
+        return ResponseEntity.ok(response);
     }
 
     @PostMapping("/{id}/lock-funds")

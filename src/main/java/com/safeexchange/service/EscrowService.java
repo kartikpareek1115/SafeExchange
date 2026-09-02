@@ -13,6 +13,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
+
 @Service
 @RequiredArgsConstructor
 public class EscrowService {
@@ -23,22 +25,50 @@ public class EscrowService {
     private final TransactionRepository transactionRepository;
 
     @Transactional
-    public EscrowResponse createEscrow(String buyerUsername, CreateEscrowRequest request) {
-        User buyer = getUserByUsername(buyerUsername);
-        User seller = getUserByUsername(request.sellerUsername());
+    public EscrowResponse createEscrow(String sellerUsername, CreateEscrowRequest request) {
+        User seller = getUserByUsername(sellerUsername);
 
         Escrow escrow = Escrow.builder()
-                .buyer(buyer)
                 .seller(seller)
                 .assetName(request.assetName())
                 .assetType(request.assetType())
                 .assetDescription(request.assetDescription())
                 .amount(request.amount())
-                .status(EscrowStatus.CREATED)
+                .status(EscrowStatus.LISTED)
                 .build();
 
         Escrow saved = escrowRepository.save(escrow);
         return toResponse(saved);
+    }
+
+    public List<EscrowResponse> getAvailableListings() {
+        return escrowRepository.findByStatus(EscrowStatus.LISTED)
+                .stream()
+                .map(this::toResponse)
+                .toList();
+    }
+
+    public EscrowResponse getEscrow(Long escrowId) {
+        return toResponse(getEscrowById(escrowId));
+    }
+
+    @Transactional
+    public EscrowResponse claimEscrow(Long escrowId, String buyerUsername) {
+        Escrow escrow = getEscrowById(escrowId);
+
+        if (escrow.getStatus() != EscrowStatus.LISTED) {
+            throw new InvalidEscrowStateException("Escrow is not available for claiming");
+        }
+
+        User buyer = getUserByUsername(buyerUsername);
+
+        if (buyer.getUsername().equals(escrow.getSeller().getUsername())) {
+            throw new UnauthorizedActionException("Seller cannot buy their own listing");
+        }
+
+        escrow.setBuyer(buyer);
+        escrow.setStatus(EscrowStatus.CREATED);
+        return toResponse(escrowRepository.save(escrow));
     }
 
     @Transactional
@@ -128,7 +158,8 @@ public class EscrowService {
     }
 
     private EscrowResponse toResponse(Escrow e) {
-        return new EscrowResponse(e.getId(), e.getBuyer().getUsername(), e.getSeller().getUsername(),
+        String buyerUsername = e.getBuyer() != null ? e.getBuyer().getUsername() : null;
+        return new EscrowResponse(e.getId(), buyerUsername, e.getSeller().getUsername(),
                 e.getAssetName(), e.getAssetType(), e.getAssetDescription(), e.getSubmissionLink(),
                 e.getAmount(), e.getStatus(), e.getCreatedAt(), e.getUpdatedAt());
     }
