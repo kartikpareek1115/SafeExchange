@@ -47,7 +47,16 @@ public class EscrowService {
                 .map(this::toResponse)
                 .toList();
     }
+    public List<EscrowResponse> getMyEscrows(String username) {
+        User user = getUserByUsername(username);
+        List<Escrow> asBuyer = escrowRepository.findByBuyerId(user.getId());
+        List<Escrow> asSeller = escrowRepository.findBySellerId(user.getId());
 
+        return java.util.stream.Stream.concat(asBuyer.stream(), asSeller.stream())
+                .sorted((a, b) -> b.getCreatedAt().compareTo(a.getCreatedAt()))
+                .map(this::toResponse)
+                .toList();
+    }
     public EscrowResponse getEscrow(Long escrowId) {
         return toResponse(getEscrowById(escrowId));
     }
@@ -156,6 +165,8 @@ public class EscrowService {
         return escrowRepository.findById(id)
                 .orElseThrow(() -> new EscrowNotFoundException("Escrow not found: " + id));
     }
+
+
 
     private EscrowResponse toResponse(Escrow e) {
         String buyerUsername = e.getBuyer() != null ? e.getBuyer().getUsername() : null;

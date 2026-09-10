@@ -1,0 +1,707 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>SafeExchange — Non-Custodial Escrow Platform</title>
+    <link rel="stylesheet" href="/style.css" />
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@500;700;800&display=swap" rel="stylesheet">
+</head>
+<body>
+
+<!-- Toast -->
+<div id="toast" class="toast hidden"></div>
+
+<!-- Navbar -->
+<header class="navbar">
+    <div class="nav-container">
+        <!-- Logo -->
+        <a href="javascript:void(0)" class="brand" onclick="navigateTo('landing')">
+            <div class="brand-icon">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2.2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="m9 12 2 2 4-4"/></svg>
+            </div>
+            <div class="brand-text">
+                <span class="brand-title">SafeExchange</span>
+                <span class="brand-subtitle">ESCROW PLATFORM</span>
+            </div>
+        </a>
+
+        <!-- Categories Dropdown -->
+        <div class="dropdown-wrapper">
+            <button class="dropdown-btn" onclick="toggleDropdown('categories-dropdown')">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2"><path d="m2 7 4.41-4.41A2 2 0 0 1 7.83 2h8.34a2 2 0 0 1 1.42.59L22 7"/><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><path d="M15 22v-4a2 2 0 0 0-2-2h-2a2 2 0 0 0-2 2v4"/><path d="M2 7h20"/></svg>
+                <span>Categories</span>
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+            </button>
+            <div id="categories-dropdown" class="dropdown-menu hidden">
+                <div class="dropdown-header">BROWSE ASSET TYPES</div>
+                <a href="javascript:void(0)" class="dropdown-item" onclick="filterCategoryAndNavigate('Gaming Account')">🎮 Gaming Accounts</a>
+                <a href="javascript:void(0)" class="dropdown-item" onclick="filterCategoryAndNavigate('Domain Name')">🌐 Domain Names</a>
+                <a href="javascript:void(0)" class="dropdown-item" onclick="filterCategoryAndNavigate('Software License')">💻 Software Licenses</a>
+                <a href="javascript:void(0)" class="dropdown-item" onclick="filterCategoryAndNavigate('SaaS Business')">🏢 SaaS Platforms</a>
+                <a href="javascript:void(0)" class="dropdown-item" onclick="filterCategoryAndNavigate('Other')">🏷️ Other Assets</a>
+            </div>
+        </div>
+
+        <!-- Search Input -->
+        <form onsubmit="handleNavSearch(event)" class="nav-search-form">
+            <svg class="search-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+            <input type="text" id="nav-search-input" placeholder="Search accounts, domains, keys..." />
+        </form>
+
+        <!-- Nav Actions -->
+        <div class="nav-actions">
+            <button class="nav-link-btn" onclick="navigateTo('marketplace')">Marketplace</button>
+
+            <!-- Logged Out -->
+            <div id="auth-logged-out" class="auth-group">
+                <button class="btn btn-ghost btn-sm" onclick="openAuthModal('login')">Sign In</button>
+                <button class="btn btn-emerald-pill btn-sm" onclick="openAuthModal('register')">Create Account</button>
+            </div>
+
+            <!-- Logged In -->
+            <div id="auth-logged-in" class="auth-group hidden">
+                <button class="btn btn-emerald-pill btn-sm" onclick="openCreateListingModal()">+ Sell Asset</button>
+                <button class="wallet-btn" onclick="navigateTo('wallet')">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2"><path d="M21 12V7H5a2 2 0 0 1 0-4h14v4"/><path d="M3 5v14a2 2 0 0 0 2 2h16v-5"/><path d="M18 12a2 2 0 0 0 0 4h4v-4Z"/></svg>
+                    <span id="nav-balance" class="balance-tag">₹0</span>
+                </button>
+                <div class="dropdown-wrapper">
+                    <button class="user-btn" onclick="toggleDropdown('user-dropdown')">
+                        <div class="user-avatar" id="nav-avatar">U</div>
+                        <span id="nav-username">User</span>
+                    </button>
+                    <div id="user-dropdown" class="dropdown-menu dropdown-right hidden">
+                        <div class="user-profile-header">
+                            <span class="muted-label">Trader Account</span>
+                            <span id="dropdown-username" class="profile-name">username</span>
+                        </div>
+                        <a href="javascript:void(0)" class="dropdown-item" onclick="navigateTo('dashboard')">My Escrows</a>
+                        <a href="javascript:void(0)" class="dropdown-item" onclick="navigateTo('wallet')">Wallet & Ledger</a>
+                        <div class="dropdown-divider"></div>
+                        <a href="javascript:void(0)" class="dropdown-item text-danger" onclick="logout()">Sign Out</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</header>
+
+<!-- ======================================================== -->
+<!-- VIEW 1: LANDING PAGE -->
+<!-- ======================================================== -->
+<div id="view-landing" class="view-page">
+
+    <!-- Hero Section with Mountain Backdrop -->
+    <section class="hero-section">
+        <!-- Mountain Backdrop Image -->
+        <div class="mountain-backdrop-wrap">
+            <img src="/images/misty_mountain_backdrop_1788431502547.jpg" alt="Misty Mountain Backdrop" class="mountain-backdrop-img" />
+            <div class="mountain-mask-overlay"></div>
+        </div>
+
+        <div class="max-w-7xl mx-auto px-4 relative z-10">
+            <!-- Top Breadcrumb -->
+            <div class="hero-top-bar">
+                <div class="breadcrumb">
+                    <span class="text-emerald">Home</span>
+                    <span class="sep">&gt;</span>
+                    <span>Independent Escrow Marketplace</span>
+                </div>
+                <div class="verified-pill">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2.5"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="m9 12 2 2 4-4"/></svg>
+                    <span>INDEPENDENT MARKETPLACE</span>
+                </div>
+            </div>
+
+            <div class="hero-grid">
+                <!-- Left Column: Who is SafeExchange + Dial Meters -->
+                <div class="hero-left-col">
+                    <!-- Card 1 -->
+                    <div class="who-card">
+                        <div class="flex-between mb-3">
+                            <div class="verified-tag">
+                                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2.5"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="m9 12 2 2 4-4"/></svg>
+                                <span>VERIFIED ESCROW</span>
+                            </div>
+                            <div class="pulse-toggle">
+                                <span class="pulse-dot"></span>
+                            </div>
+                        </div>
+                        <h3 class="who-title">Who is SafeExchange?</h3>
+                        <p class="who-desc">
+                            Turn your digital assets into guaranteed funds, or buy verified gaming accounts, web domains, and source code without counterparty risk.
+                        </p>
+                        <p class="who-motto">Trade. Protect. Settle.</p>
+                        <button class="btn btn-amber w-full mt-4" onclick="navigateTo('marketplace')">
+                            <span>Explore Market Deals</span> →
+                        </button>
+                    </div>
+
+                    <!-- Card 2: 4 Circular Dials -->
+                    <div class="stat-dials-card">
+                        <div class="dials-grid">
+                            <div class="dial-item">
+                                <div class="dial-circle">
+                                    <svg viewBox="0 0 76 76">
+                                        <circle cx="38" cy="38" r="31" class="dial-track" stroke-width="4" fill="transparent"/>
+                                        <circle cx="38" cy="38" r="31" class="dial-fill" stroke-width="4" stroke-dasharray="194.7" stroke-dashoffset="15.5" fill="transparent"/>
+                                    </svg>
+                                    <span class="dial-val">&gt;₹2.4Cr</span>
+                                </div>
+                                <span class="dial-label">Escrowed Volume</span>
+                            </div>
+                            <div class="dial-item">
+                                <div class="dial-circle">
+                                    <svg viewBox="0 0 76 76">
+                                        <circle cx="38" cy="38" r="31" class="dial-track" stroke-width="4" fill="transparent"/>
+                                        <circle cx="38" cy="38" r="31" class="dial-fill" stroke-width="4" stroke-dasharray="194.7" stroke-dashoffset="0" fill="transparent"/>
+                                    </svg>
+                                    <span class="dial-val">100%</span>
+                                </div>
+                                <span class="dial-label">Dispute Protected</span>
+                            </div>
+                            <div class="dial-item">
+                                <div class="dial-circle">
+                                    <svg viewBox="0 0 76 76">
+                                        <circle cx="38" cy="38" r="31" class="dial-track" stroke-width="4" fill="transparent"/>
+                                        <circle cx="38" cy="38" r="31" class="dial-fill" stroke-width="4" stroke-dasharray="194.7" stroke-dashoffset="29.2" fill="transparent"/>
+                                    </svg>
+                                    <span class="dial-val">&gt;45k</span>
+                                </div>
+                                <span class="dial-label">Completed Trades</span>
+                            </div>
+                            <div class="dial-item">
+                                <div class="dial-circle">
+                                    <svg viewBox="0 0 76 76">
+                                        <circle cx="38" cy="38" r="31" class="dial-track" stroke-width="4" fill="transparent"/>
+                                        <circle cx="38" cy="38" r="31" class="dial-fill" stroke-width="4" stroke-dasharray="194.7" stroke-dashoffset="0" fill="transparent"/>
+                                    </svg>
+                                    <span class="dial-val">0%</span>
+                                </div>
+                                <span class="dial-label">Buyer Escrow Fee</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Right Column: Headlines & Escrow Calculator -->
+                <div class="hero-right-col">
+                    <div class="hero-badges-row">
+              <span class="hero-pill-green">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+                Non-Custodial Escrow Platform
+              </span>
+                        <span class="hero-pill-dark">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                AUTOMATED SMART PROTECTION
+              </span>
+                    </div>
+
+                    <h1 class="hero-headline">
+                        SECURE EVERY DIGITAL DEAL <span class="text-emerald">WITH COMPLETE TRUST</span>
+                    </h1>
+                    <p class="hero-subtext">
+                        SafeExchange protects digital asset buyers and sellers. Funds are securely locked in automated escrow vaults until credentials, domain authorization codes, and software licenses are inspected.
+                    </p>
+
+                    <!-- Search Bar -->
+                    <form onsubmit="handleHeroSearch(event)" class="hero-search-bar">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="2"><path d="m2 7 4.41-4.41A2 2 0 0 1 7.83 2h8.34a2 2 0 0 1 1.42.59L22 7"/><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><path d="M15 22v-4a2 2 0 0 0-2-2h-2a2 2 0 0 0-2 2v4"/><path d="M2 7h20"/></svg>
+                        <input type="text" id="hero-search-input" placeholder="Search accounts, domains, keys, licenses..." />
+                        <button type="submit" class="btn btn-emerald-pill btn-sm">Search →</button>
+                    </form>
+
+                    <!-- Calculator Card -->
+                    <div class="calc-card">
+                        <div class="calc-header">
+                            <div class="calc-title">
+                                <div class="lock-icon-box">
+                                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                                </div>
+                                <span>INSTANT ESCROW CALCULATION</span>
+                            </div>
+                            <span class="calc-badge">Active Vault Protection</span>
+                        </div>
+
+                        <div class="calc-grid">
+                            <div>
+                                <label class="calc-label">Digital Asset Type</label>
+                                <select id="calc-asset-type" class="calc-input">
+                                    <option>Gaming Account (Steam / Riot / Epic)</option>
+                                    <option>Domain Name (.com / .io / .ai)</option>
+                                    <option>Software License / Source Code</option>
+                                    <option>SaaS Business / Micro-Startup</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="calc-label">Inspection Window</label>
+                                <select class="calc-input">
+                                    <option>24 Hours Standard Verification</option>
+                                    <option>48 Hours Extended Security</option>
+                                    <option>Instant Inspection & Release</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="calc-label">Deal Value</label>
+                                <div class="currency-input-wrap">
+                                    <span class="currency-prefix">₹ INR</span>
+                                    <input type="number" id="calc-deal-value" value="20000" class="calc-input" />
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="calc-footer">
+                            <div class="calc-notes">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+                                <span>0% Buyer fee • Direct automated release upon inspection</span>
+                            </div>
+                            <button class="btn btn-emerald-pill" onclick="openCreateListingModal()">
+                                Start Escrowing Now →
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Popular Categories -->
+    <section class="section-container border-bottom">
+        <div class="max-w-7xl mx-auto px-4">
+            <!-- Horizontal Tabs -->
+            <div class="category-tabs">
+                <button class="cat-tab active" onclick="switchCategoryTab('ALL', this)">POPULAR</button>
+                <button class="cat-tab" onclick="switchCategoryTab('Gaming Account', this)">GAMING ACCOUNTS</button>
+                <button class="cat-tab" onclick="switchCategoryTab('Domain Name', this)">DOMAINS & WEB</button>
+                <button class="cat-tab" onclick="switchCategoryTab('Software License', this)">SOFTWARE & KEYS</button>
+                <button class="cat-tab" onclick="switchCategoryTab('SaaS Business', this)">SAAS BUSINESSES</button>
+            </div>
+
+            <div class="section-title-row">
+                <div>
+                    <span class="section-eyebrow">MARKETPLACE INVENTORY</span>
+                    <h2 class="section-heading">POPULAR CATEGORIES</h2>
+                    <p class="section-desc">Browse verified digital assets protected by non-custodial smart escrow</p>
+                </div>
+                <button class="btn btn-outline-pill" onclick="navigateTo('marketplace')">View All Listings →</button>
+            </div>
+
+            <!-- 4 Exact Cards with Real Images -->
+            <div class="grid-4" id="categories-cards-grid">
+                <!-- Populated by JS with exact images -->
+            </div>
+        </div>
+    </section>
+
+    <!-- Featured Listings Grid -->
+    <section class="section-container border-bottom">
+        <div class="max-w-7xl mx-auto px-4">
+            <div class="section-title-row">
+                <div>
+                    <span class="section-eyebrow">VERIFIED INVENTORY</span>
+                    <h2 class="section-heading">FEATURED <span class="text-emerald">LISTINGS</span></h2>
+                </div>
+                <button class="btn btn-outline-pill" onclick="navigateTo('marketplace')">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m2 7 4.41-4.41A2 2 0 0 1 7.83 2h8.34a2 2 0 0 1 1.42.59L22 7"/><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><path d="M15 22v-4a2 2 0 0 0-2-2h-2a2 2 0 0 0-2 2v4"/><path d="M2 7h20"/></svg>
+                    Browse All Deals
+                </button>
+            </div>
+            <div id="landing-featured-grid" class="grid-3">
+                <!-- Populated by JS -->
+            </div>
+        </div>
+    </section>
+
+    <!-- 5-Step Escrow Workflow -->
+    <section class="section-container border-bottom">
+        <div class="max-w-7xl mx-auto px-4 text-center">
+            <span class="section-eyebrow">SIMPLE 5-STEP PROCESS</span>
+            <h2 class="section-heading">HOW ESCROW <span class="text-emerald">WORKS</span></h2>
+            <p class="section-desc max-w-2xl mx-auto mb-12">
+                Every digital asset trade on SafeExchange follows an automated, transparent smart contract workflow.
+            </p>
+
+            <div class="grid-5">
+                <div class="step-card">
+                    <div class="step-num">01</div>
+                    <h4 class="step-title">List Asset</h4>
+                    <p class="step-desc">Seller creates an escrow listing with asset details and price</p>
+                </div>
+                <div class="step-card">
+                    <div class="step-num">02</div>
+                    <h4 class="step-title">Buyer Claims</h4>
+                    <p class="step-desc">A buyer claims the listing to initiate the transaction</p>
+                </div>
+                <div class="step-card">
+                    <div class="step-num">03</div>
+                    <h4 class="step-title">Lock Funds</h4>
+                    <p class="step-desc">Buyer locks purchase funds safely in escrow</p>
+                </div>
+                <div class="step-card">
+                    <div class="step-num">04</div>
+                    <h4 class="step-title">Submit Asset</h4>
+                    <p class="step-desc">Seller submits credential or download link</p>
+                </div>
+                <div class="step-card">
+                    <div class="step-num">05</div>
+                    <h4 class="step-title">Confirm & Release</h4>
+                    <p class="step-desc">Buyer inspects and confirms; funds release to seller</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Protection Pillars -->
+    <section class="section-container border-bottom">
+        <div class="max-w-7xl mx-auto px-4 text-center mb-12">
+            <span class="section-eyebrow">UNCOMPROMISING SECURITY</span>
+            <h2 class="section-heading">OUR <span class="text-emerald">FEATURES</span></h2>
+            <p class="section-desc max-w-2xl mx-auto">
+                Built from the ground up for safe, non-custodial transactions with institutional-grade safeguards.
+            </p>
+        </div>
+
+        <div class="max-w-7xl mx-auto px-4">
+            <div class="grid-2">
+                <!-- Buyer Protection -->
+                <div class="pillar-card">
+                    <div class="pillar-icon">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2.2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="m9 12 2 2 4-4"/></svg>
+                    </div>
+                    <h3 class="pillar-title">Complete Buyer Protection</h3>
+                    <p class="pillar-desc">
+                        Your funds stay locked securely in our automated escrow vault. The seller does not receive a single rupee until you inspect and test the delivered credentials.
+                    </p>
+                    <ul class="pillar-list">
+                        <li><span>✓</span> Funds remain in non-custodial escrow during 24h inspection</li>
+                        <li><span>✓</span> Buyer holds the release trigger to authorize final settlement</li>
+                        <li><span>✓</span> Instant full refund if seller fails to supply valid credentials</li>
+                    </ul>
+                </div>
+
+                <!-- Seller Protection -->
+                <div class="pillar-card">
+                    <div class="pillar-icon">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2.2"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                    </div>
+                    <h3 class="pillar-title">Guaranteed Seller Protection</h3>
+                    <p class="pillar-desc">
+                        Never risk valuable accounts, licenses, or domains on buyer promises. Deliver credentials only after buyer funds are locked into verified escrow custody.
+                    </p>
+                    <ul class="pillar-list">
+                        <li><span>✓</span> Guaranteed funding verified before credentials submission</li>
+                        <li><span>✓</span> Direct wallet settlement upon inspection completion</li>
+                        <li><span>✓</span> Cryptographic timestamped delivery log for transaction proof</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- CTA Pre-Footer -->
+    <section class="section-container text-center">
+        <div class="max-w-4xl mx-auto px-4 space-y-4">
+            <div class="verified-pill mx-auto">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2.5"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="m9 12 2 2 4-4"/></svg>
+                <span>Non-Custodial Escrow Platform</span>
+            </div>
+            <h2 class="text-3xl font-extrabold">Ready to trade digital assets with complete confidence?</h2>
+            <p class="text-secondary text-sm max-w-xl mx-auto">
+                Experience zero-fraud digital asset buying and selling with automated non-custodial escrow protection.
+            </p>
+            <div class="flex-row gap-3 justify-center pt-2">
+                <button class="btn btn-emerald-pill" onclick="navigateTo('marketplace')">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m2 7 4.41-4.41A2 2 0 0 1 7.83 2h8.34a2 2 0 0 1 1.42.59L22 7"/><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><path d="M15 22v-4a2 2 0 0 0-2-2h-2a2 2 0 0 0-2 2v4"/><path d="M2 7h20"/></svg>
+                    Explore Marketplace
+                </button>
+                <button class="btn btn-dark-pill" onclick="openCreateListingModal()">Create A Listing</button>
+            </div>
+        </div>
+    </section>
+
+    <!-- Deep Emerald Green Footer -->
+    <footer class="green-footer">
+        <div class="max-w-7xl mx-auto px-4 space-y-12">
+            <!-- Community Newsletter -->
+            <div class="footer-newsletter-row">
+                <div>
+                    <span class="footer-eyebrow">STAY CONNECTED WITH US</span>
+                    <h3 class="footer-headline">Join Our Escrow Marketplace Community</h3>
+                </div>
+                <form onsubmit="event.preventDefault(); showToast('Subscribed to community updates!', 'success')" class="newsletter-form">
+                    <input type="email" placeholder="Enter your email address..." required />
+                    <button type="submit" class="btn btn-emerald-pill btn-sm">Subscribe</button>
+                </form>
+            </div>
+
+            <div class="footer-grid">
+                <!-- Col 1 -->
+                <div>
+                    <div class="brand mb-3">
+                        <div class="brand-icon">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2.2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="m9 12 2 2 4-4"/></svg>
+                        </div>
+                        <div class="brand-text">
+                            <span class="brand-title text-white">SafeExchange</span>
+                            <span class="brand-subtitle">ESCROW PLATFORM</span>
+                        </div>
+                    </div>
+                    <p class="text-xs text-secondary leading-relaxed mb-4 max-w-sm">
+                        SafeExchange ensures secure, transparent transactions for digital asset buyers and sellers. With verified escrow custody, credential protection, and automated settlements.
+                    </p>
+                    <div class="flex-row gap-2 text-emerald text-xs font-semibold">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                        <span>100% Non-Custodial Smart Escrow Protection</span>
+                    </div>
+                </div>
+
+                <!-- Col 2: Quick Links -->
+                <div>
+                    <h4 class="footer-col-title">QUICK LINKS</h4>
+                    <ul class="footer-links">
+                        <li><a href="javascript:void(0)" onclick="navigateTo('marketplace')">Marketplace</a></li>
+                        <li><a href="javascript:void(0)" onclick="openCreateListingModal()">Create Listing</a></li>
+                        <li><a href="javascript:void(0)" onclick="navigateTo('wallet')">Wallet & Balances</a></li>
+                        <li><a href="javascript:void(0)" onclick="navigateTo('wallet')">Transaction Ledger</a></li>
+                    </ul>
+                </div>
+
+                <!-- Col 3: Escrow Security -->
+                <div>
+                    <h4 class="footer-col-title">ESCROW SECURITY</h4>
+                    <ul class="footer-checklist">
+                        <li><span>✓</span> Seller lists verified asset</li>
+                        <li><span>✓</span> Buyer locks funds into vault</li>
+                        <li><span>✓</span> Seller delivers credentials</li>
+                        <li><span>✓</span> Inspection confirmed, payout released</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="footer-bottom">
+                <span>© 2026 SafeExchange Platform. All rights reserved.</span>
+                <span>Non-Custodial Escrow Protocol</span>
+            </div>
+        </div>
+    </footer>
+</div>
+
+<!-- ======================================================== -->
+<!-- VIEW 2: MARKETPLACE PAGE -->
+<!-- ======================================================== -->
+<div id="view-marketplace" class="view-page hidden">
+    <div class="max-w-7xl mx-auto px-4 py-8 space-y-6">
+        <div class="flex-between border-bottom pb-6">
+            <div>
+                <div class="text-xs text-muted flex-row gap-2 mb-1">
+                    <span class="text-emerald">🏪</span>
+                    <span>Digital Marketplace</span>
+                </div>
+                <h1 class="page-title flex-row gap-3">
+                    Explore Digital Assets
+                    <span id="marketplace-count-badge" class="count-badge">0 Listings</span>
+                </h1>
+                <p class="text-secondary text-sm">Browse verified gaming accounts, domain names, and software licenses protected by SafeExchange escrow.</p>
+            </div>
+            <div class="flex-row gap-3">
+                <button class="btn btn-outline-pill btn-sm" onclick="loadMarketplace()">↻ Refresh</button>
+                <button class="btn btn-emerald-pill btn-sm" onclick="openCreateListingModal()">+ Sell Asset</button>
+            </div>
+        </div>
+
+        <!-- Filters & Sorting -->
+        <div class="filter-box">
+            <div class="flex-row gap-4 flex-wrap">
+                <div class="search-input-wrap flex-1">
+                    <input type="text" id="market-search-input" oninput="applyMarketFilters()" placeholder="Search by asset name, keywords, or seller username..." />
+                </div>
+                <div class="sort-select-wrap">
+                    <select id="market-sort-select" onchange="applyMarketFilters()">
+                        <option value="NEWEST">Newest First</option>
+                        <option value="PRICE_HIGH">Price: High to Low</option>
+                        <option value="PRICE_LOW">Price: Low to High</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="horizontal-filter-row">
+                <span class="filter-label">Category:</span>
+                <button class="cat-pill active" onclick="filterCategory('ALL', this)">All Assets</button>
+                <button class="cat-pill" onclick="filterCategory('Gaming Account', this)">Gaming Account</button>
+                <button class="cat-pill" onclick="filterCategory('Domain Name', this)">Domain Name</button>
+                <button class="cat-pill" onclick="filterCategory('Software License', this)">Software License</button>
+                <button class="cat-pill" onclick="filterCategory('SaaS Business', this)">SaaS Business</button>
+                <button class="cat-pill" onclick="filterCategory('Other', this)">Other</button>
+            </div>
+        </div>
+
+        <!-- Listings Grid -->
+        <div id="marketplace-grid" class="grid-3">
+            <div class="loading-state">Loading marketplace listings...</div>
+        </div>
+    </div>
+</div>
+
+<!-- ======================================================== -->
+<!-- VIEW 3: DASHBOARD (MY ESCROWS) -->
+<!-- ======================================================== -->
+<div id="view-dashboard" class="view-page hidden">
+    <div class="max-w-7xl mx-auto px-4 py-8 space-y-6">
+        <div class="flex-between border-bottom pb-4">
+            <div>
+                <h1 class="page-title">My Escrow Vault</h1>
+                <p class="text-secondary text-xs">Manage active and completed digital asset escrows</p>
+            </div>
+            <div class="tab-pill-group">
+                <button class="tab-pill active" onclick="filterMyEscrows('ALL', this)">All</button>
+                <button class="tab-pill" onclick="filterMyEscrows('BUYER', this)">As Buyer</button>
+                <button class="tab-pill" onclick="filterMyEscrows('SELLER', this)">As Seller</button>
+            </div>
+        </div>
+
+        <div id="dashboard-escrows-list" class="space-y-4">
+            <div class="loading-state">Loading your escrows...</div>
+        </div>
+    </div>
+</div>
+
+<!-- ======================================================== -->
+<!-- VIEW 4: WALLET & AUDIT TRAIL -->
+<!-- ======================================================== -->
+<div id="view-wallet" class="view-page hidden">
+    <div class="max-w-7xl mx-auto px-4 py-8 space-y-6">
+        <div class="border-bottom pb-4">
+            <h1 class="page-title">Wallet & Ledger</h1>
+            <p class="text-secondary text-xs">Deposit funds and review cryptographic transaction history</p>
+        </div>
+
+        <div class="grid-2-wallet">
+            <!-- Balance Card -->
+            <div class="card p-6">
+                <span class="text-xs text-secondary font-bold">AVAILABLE WALLET BALANCE</span>
+                <div class="balance-display" id="wallet-card-balance">₹0.00</div>
+                <p class="text-xs text-muted mb-6">Funds can be locked into any escrow contract or credited upon trade delivery.</p>
+
+                <form onsubmit="handleDeposit(event)">
+                    <label class="form-label">Deposit Funds</label>
+                    <div class="deposit-input-group">
+                        <span class="prefix">₹</span>
+                        <input type="number" id="deposit-amount-input" min="1" step="any" placeholder="Enter deposit amount..." required />
+                        <button type="submit" class="btn btn-emerald-pill">Deposit</button>
+                    </div>
+                    <div class="quick-chip-row">
+                        <button type="button" class="quick-chip" onclick="setDepositValue(1000)">+₹1,000</button>
+                        <button type="button" class="quick-chip" onclick="setDepositValue(5000)">+₹5,000</button>
+                        <button type="button" class="quick-chip" onclick="setDepositValue(25000)">+₹25,000</button>
+                        <button type="button" class="quick-chip" onclick="setDepositValue(50000)">+₹50,000</button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Ledger Card -->
+            <div class="card p-6">
+                <div class="flex-between mb-4">
+                    <h3 class="font-bold text-sm">Transaction Audit Trail</h3>
+
+                </div>
+                <div id="transactions-ledger-list" class="ledger-container">
+                    <div class="loading-state">Loading ledger...</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modals -->
+<div id="modal-auth" class="modal-backdrop hidden">
+    <div class="modal-box">
+        <div class="modal-header">
+            <h3 id="auth-title">Sign In</h3>
+            <button class="close-btn" onclick="closeModal('modal-auth')">&times;</button>
+        </div>
+        <div class="auth-tabs">
+            <button type="button" id="tab-auth-login" class="tab-btn active" onclick="switchAuthMode('login')">Sign In</button>
+            <button type="button" id="tab-auth-register" class="tab-btn" onclick="switchAuthMode('register')">Create Account</button>
+        </div>
+        <form onsubmit="handleAuthSubmit(event)" class="space-y-3">
+            <div>
+                <label class="form-label">Username</label>
+                <input type="text" id="auth-username" class="modal-input" placeholder="e.g. voidtrader" required />
+            </div>
+            <div id="auth-email-group" class="hidden">
+                <label class="form-label">Email</label>
+                <input type="email" id="auth-email" class="modal-input" placeholder="trader@safeexchange.io" />
+            </div>
+            <div>
+                <label class="form-label">Password</label>
+                <input type="password" id="auth-password" class="modal-input" placeholder="••••••••" required />
+            </div>
+            <button type="submit" id="auth-submit-btn" class="btn btn-emerald-pill w-full mt-4">Sign In →</button>
+        </form>
+    </div>
+</div>
+
+<div id="modal-create-listing" class="modal-backdrop hidden">
+    <div class="modal-box">
+        <div class="modal-header">
+            <h3>Create Escrow Listing</h3>
+            <button class="close-btn" onclick="closeModal('modal-create-listing')">&times;</button>
+        </div>
+        <form onsubmit="handleCreateListingSubmit(event)" class="space-y-3">
+            <div>
+                <label class="form-label">Asset Title / Name *</label>
+                <input type="text" id="create-asset-name" class="modal-input" placeholder="e.g. Valorant Radiant Account or saaskit.dev" required />
+            </div>
+            <div>
+                <label class="form-label">Category *</label>
+                <select id="create-asset-type" class="modal-input" required>
+                    <option value="Gaming Account">Gaming Account</option>
+                    <option value="Domain Name">Domain Name</option>
+                    <option value="Software License">Software License</option>
+                    <option value="SaaS Business">SaaS Business</option>
+                    <option value="Codebase / Repository">Codebase / Repository</option>
+                    <option value="Other">Other Asset</option>
+                </select>
+            </div>
+            <div>
+                <label class="form-label">Price (₹ INR) *</label>
+                <input type="number" id="create-amount" class="modal-input" min="1" step="any" placeholder="e.g. 25000" required />
+            </div>
+            <div>
+                <label class="form-label">Description & Delivery Specification</label>
+                <textarea id="create-description" class="modal-input" rows="3" placeholder="Detail verified credentials, ownership transfer codes, or deliverables..."></textarea>
+            </div>
+            <button type="submit" class="btn btn-emerald-pill w-full mt-4">List in Marketplace</button>
+        </form>
+    </div>
+</div>
+
+<div id="modal-submit-asset" class="modal-backdrop hidden">
+    <div class="modal-box">
+        <div class="modal-header">
+            <h3>Deliver Digital Asset</h3>
+            <button class="close-btn" onclick="closeModal('modal-submit-asset')">&times;</button>
+        </div>
+        <form onsubmit="handleSubmitAssetForm(event)" class="space-y-3">
+            <input type="hidden" id="submit-asset-id" />
+            <p class="text-xs text-secondary mb-2">Funds are locked in escrow. Provide the credential access URL or download package link for the buyer:</p>
+            <div>
+                <label class="form-label">Delivery URL / Download Link *</label>
+                <input type="url" id="submit-asset-link" class="modal-input" placeholder="https://secure-drive.com/keys/asset.enc" required />
+            </div>
+            <button type="submit" class="btn btn-emerald-pill w-full mt-4">Submit Asset to Escrow</button>
+        </form>
+    </div>
+</div>
+
+<!-- Floating Scroll-To-Top Button -->
+<button onclick="window.scrollTo({ top: 0, behavior: 'smooth' })" class="floating-top-btn" title="Back to top">
+    ↑
+</button>
+
+<script src="/app.js"></script>
+</body>
+</html>

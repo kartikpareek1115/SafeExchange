@@ -34,6 +34,11 @@ public class EscrowController {
         return ResponseEntity.ok(escrowService.getAvailableListings());
     }
 
+    @GetMapping("/user/all")
+    public ResponseEntity<List<EscrowResponse>> getMyEscrows(Authentication authentication) {
+        return ResponseEntity.ok(escrowService.getMyEscrows(authentication.getName()));
+    }
+
     @GetMapping("/{id}")
     public ResponseEntity<EscrowResponse> getEscrow(@PathVariable Long id) {
         return ResponseEntity.ok(escrowService.getEscrow(id));
