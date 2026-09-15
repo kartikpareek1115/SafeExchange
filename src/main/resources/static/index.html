@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>SafeExchange — Non-Custodial Escrow Platform</title>
     <link rel="stylesheet" href="/style.css" />
+    <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@500;700;800&display=swap" rel="stylesheet">
@@ -45,11 +46,7 @@
             </div>
         </div>
 
-        <!-- Search Input -->
-        <form onsubmit="handleNavSearch(event)" class="nav-search-form">
-            <svg class="search-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
-            <input type="text" id="nav-search-input" placeholder="Search accounts, domains, keys..." />
-        </form>
+
 
         <!-- Nav Actions -->
         <div class="nav-actions">
@@ -568,52 +565,182 @@
     </div>
 </div>
 
+
 <!-- ======================================================== -->
 <!-- VIEW 4: WALLET & AUDIT TRAIL -->
 <!-- ======================================================== -->
 <div id="view-wallet" class="view-page hidden">
     <div class="max-w-7xl mx-auto px-4 py-8 space-y-6">
+
         <div class="border-bottom pb-4">
-            <h1 class="page-title">Wallet & Ledger</h1>
-            <p class="text-secondary text-xs">Deposit funds and review cryptographic transaction history</p>
+            <div>
+                <h1 class="page-title">Wallet & Ledger</h1>
+                <p class="text-secondary text-xs">
+                    Add funds securely using Razorpay Test Mode
+                </p>
+            </div>
         </div>
 
         <div class="grid-2-wallet">
-            <!-- Balance Card -->
-            <div class="card p-6">
-                <span class="text-xs text-secondary font-bold">AVAILABLE WALLET BALANCE</span>
-                <div class="balance-display" id="wallet-card-balance">₹0.00</div>
-                <p class="text-xs text-muted mb-6">Funds can be locked into any escrow contract or credited upon trade delivery.</p>
 
-                <form onsubmit="handleDeposit(event)">
-                    <label class="form-label">Deposit Funds</label>
+            <!-- Balance + Deposit Card -->
+            <div class="card p-6 wallet-payment-card">
+
+                <div class="wallet-balance-header">
+                    <div>
+                        <span class="text-xs text-secondary font-bold">
+                            AVAILABLE WALLET BALANCE
+                        </span>
+
+                        <div class="balance-display" id="wallet-card-balance">
+                            ₹0.00
+                        </div>
+                    </div>
+
+                    <div class="wallet-icon">
+                        <svg width="22" height="22"
+                             viewBox="0 0 24 24"
+                             fill="none"
+                             stroke="currentColor"
+                             stroke-width="1.8">
+                            <path d="M21 12V7H5a2 2 0 0 1 0-4h14v4"/>
+                            <path d="M3 5v14a2 2 0 0 0 2 2h16v-5"/>
+                            <path d="M18 12a2 2 0 0 0 0 4h4v-4Z"/>
+                        </svg>
+                    </div>
+                </div>
+
+                <p class="text-xs text-muted mb-6">
+                    Funds added through Razorpay Test Mode can be used
+                    for SafeExchange escrow transactions.
+                </p>
+
+                <form onsubmit="handleDeposit(event)" id="deposit-form">
+
+                    <label class="form-label">
+                        Add Funds
+                    </label>
+
                     <div class="deposit-input-group">
+
                         <span class="prefix">₹</span>
-                        <input type="number" id="deposit-amount-input" min="1" step="any" placeholder="Enter deposit amount..." required />
-                        <button type="submit" class="btn btn-emerald-pill">Deposit</button>
+
+                        <input
+                                type="number"
+                                id="deposit-amount-input"
+                                min="1"
+                                max="100000"
+                                step="1"
+                                placeholder="Enter amount..."
+                                required
+                        />
+
+                        <button
+                                type="submit"
+                                id="deposit-btn"
+                                class="btn btn-emerald-pill"
+                        >
+                            Pay Securely
+                        </button>
+
                     </div>
+
                     <div class="quick-chip-row">
-                        <button type="button" class="quick-chip" onclick="setDepositValue(1000)">+₹1,000</button>
-                        <button type="button" class="quick-chip" onclick="setDepositValue(5000)">+₹5,000</button>
-                        <button type="button" class="quick-chip" onclick="setDepositValue(25000)">+₹25,000</button>
-                        <button type="button" class="quick-chip" onclick="setDepositValue(50000)">+₹50,000</button>
+
+                        <button
+                                type="button"
+                                class="quick-chip"
+                                onclick="setDepositValue(100)"
+                        >
+                            +₹100
+                        </button>
+
+                        <button
+                                type="button"
+                                class="quick-chip"
+                                onclick="setDepositValue(500)"
+                        >
+                            +₹500
+                        </button>
+
+                        <button
+                                type="button"
+                                class="quick-chip"
+                                onclick="setDepositValue(1000)"
+                        >
+                            +₹1,000
+                        </button>
+
+                        <button
+                                type="button"
+                                class="quick-chip"
+                                onclick="setDepositValue(5000)"
+                        >
+                            +₹5,000
+                        </button>
+
                     </div>
+
                 </form>
+
+                <!-- Razorpay Test Mode Notice -->
+                <div class="razorpay-test-notice">
+
+                    <div class="test-notice-icon">
+                        ✓
+                    </div>
+
+                    <div>
+                        <strong>Razorpay Test Mode</strong>
+
+                        <p>
+                            No real money is charged. Use Razorpay's
+                            test payment credentials during checkout.
+                        </p>
+                    </div>
+
+                </div>
+
             </div>
+
 
             <!-- Ledger Card -->
             <div class="card p-6">
+
                 <div class="flex-between mb-4">
-                    <h3 class="font-bold text-sm">Transaction Audit Trail</h3>
+
+                    <div>
+                        <h3 class="font-bold text-sm">
+                            Transaction Audit Trail
+                        </h3>
+
+                        <p class="text-muted text-xs mt-1">
+                            Wallet transaction history
+                        </p>
+                    </div>
+
+                    <div class="ledger-secure-badge">
+                        SECURE
+                    </div>
 
                 </div>
-                <div id="transactions-ledger-list" class="ledger-container">
-                    <div class="loading-state">Loading ledger...</div>
+
+                <div
+                        id="transactions-ledger-list"
+                        class="ledger-container"
+                >
+                    <div class="loading-state">
+                        Loading ledger...
+                    </div>
                 </div>
+
             </div>
+
         </div>
+
     </div>
 </div>
+
 
 <!-- Modals -->
 <div id="modal-auth" class="modal-backdrop hidden">
@@ -637,9 +764,79 @@
             </div>
             <div>
                 <label class="form-label">Password</label>
-                <input type="password" id="auth-password" class="modal-input" placeholder="••••••••" required />
+                <input type="password" id="auth-password" class="modal-input" oninput="renderPasswordChecklist()" placeholder="••••••••" required />
+                <div id="password-checklist" class="password-checklist hidden">
+                    <span id="pw-check-length" class="pw-check">8+ characters</span>
+                    <span id="pw-check-upper" class="pw-check">Uppercase letter</span>
+                    <span id="pw-check-lower" class="pw-check">Lowercase letter</span>
+                    <span id="pw-check-digit" class="pw-check">Number</span>
+                    <span id="pw-check-special" class="pw-check">Special character</span>
+                </div>
+            </div>
+            <div id="auth-forgot-link" class="text-right">
+                <a href="#" class="link-sm" onclick="openForgotPasswordModal(event)">Forgot password?</a>
             </div>
             <button type="submit" id="auth-submit-btn" class="btn btn-emerald-pill w-full mt-4">Sign In →</button>
+        </form>
+    </div>
+</div>
+
+<div id="modal-otp" class="modal-backdrop hidden">
+    <div class="modal-box">
+        <div class="modal-header">
+            <h3>Verify your email</h3>
+            <button class="close-btn" onclick="closeModal('modal-otp')">&times;</button>
+        </div>
+        <p class="text-muted" style="font-size:0.8rem; margin-bottom:14px">
+            Enter the 6-digit code sent to <strong id="otp-target-email">your email</strong>.
+        </p>
+        <form onsubmit="handleOtpSubmit(event)" class="space-y-3">
+            <div>
+                <label class="form-label">Verification code</label>
+                <input type="text" id="otp-code-input" class="modal-input otp-input" maxlength="6" inputmode="numeric" placeholder="000000" required />
+            </div>
+            <button type="submit" class="btn btn-emerald-pill w-full mt-2">Verify →</button>
+            <button type="button" class="btn btn-ghost w-full" onclick="handleResendOtp()">Resend code</button>
+        </form>
+    </div>
+</div>
+
+<div id="modal-forgot-password" class="modal-backdrop hidden">
+    <div class="modal-box">
+        <div class="modal-header">
+            <h3 id="forgot-title">Reset password</h3>
+            <button class="close-btn" onclick="closeModal('modal-forgot-password')">&times;</button>
+        </div>
+
+        <form id="forgot-step-email" onsubmit="handleForgotPasswordSubmit(event)" class="space-y-3">
+            <p class="text-muted" style="font-size:0.8rem">Enter your account email and we'll send a reset code.</p>
+            <div>
+                <label class="form-label">Email</label>
+                <input type="email" id="forgot-email" class="modal-input" placeholder="trader@safeexchange.io" required />
+            </div>
+            <button type="submit" class="btn btn-emerald-pill w-full mt-2">Send reset code →</button>
+        </form>
+
+        <form id="forgot-step-reset" onsubmit="handleResetPasswordSubmit(event)" class="space-y-3 hidden">
+            <p class="text-muted" style="font-size:0.8rem">
+                Enter the code sent to <strong id="reset-target-email">your email</strong> and choose a new password.
+            </p>
+            <div>
+                <label class="form-label">Verification code</label>
+                <input type="text" id="reset-otp-input" class="modal-input otp-input" maxlength="6" inputmode="numeric" placeholder="000000" required />
+            </div>
+            <div>
+                <label class="form-label">New password</label>
+                <input type="password" id="reset-new-password" class="modal-input" oninput="renderPasswordChecklist('reset-password-checklist', 'reset-new-password')" placeholder="••••••••" required />
+                <div id="reset-password-checklist" class="password-checklist">
+                    <span id="rpw-check-length" class="pw-check">8+ characters</span>
+                    <span id="rpw-check-upper" class="pw-check">Uppercase letter</span>
+                    <span id="rpw-check-lower" class="pw-check">Lowercase letter</span>
+                    <span id="rpw-check-digit" class="pw-check">Number</span>
+                    <span id="rpw-check-special" class="pw-check">Special character</span>
+                </div>
+            </div>
+            <button type="submit" class="btn btn-emerald-pill w-full mt-2">Reset password →</button>
         </form>
     </div>
 </div>
@@ -701,7 +898,7 @@
 <button onclick="window.scrollTo({ top: 0, behavior: 'smooth' })" class="floating-top-btn" title="Back to top">
     ↑
 </button>
-
+<script src="https://checkout.razorpay.com/v1/checkout.js"></script>
 <script src="/app.js"></script>
 </body>
 </html>

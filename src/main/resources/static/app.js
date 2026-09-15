@@ -12,7 +12,37 @@ const state = {
   searchQuery: '',
   sortBy: 'NEWEST',
   authMode: 'login',
+  pendingVerificationEmail: null,
+  pendingResetEmail: null,
 };
+
+const PASSWORD_RULES = {
+  length: (pw) => pw.length >= 8,
+  upper: (pw) => /[A-Z]/.test(pw),
+  lower: (pw) => /[a-z]/.test(pw),
+  digit: (pw) => /\d/.test(pw),
+  special: (pw) => /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>/?]/.test(pw),
+};
+
+function isPasswordValid(password) {
+  return Object.values(PASSWORD_RULES).every((rule) => rule(password));
+}
+
+function renderPasswordChecklist(containerId = 'password-checklist', inputId = 'auth-password') {
+  const input = document.getElementById(inputId);
+  const container = document.getElementById(containerId);
+  if (!input || !container) return;
+
+  const password = input.value;
+  container.classList.remove('hidden');
+  const prefix = containerId === 'reset-password-checklist' ? 'rpw' : 'pw';
+
+  document.getElementById(`${prefix}-check-length`).classList.toggle('valid', PASSWORD_RULES.length(password));
+  document.getElementById(`${prefix}-check-upper`).classList.toggle('valid', PASSWORD_RULES.upper(password));
+  document.getElementById(`${prefix}-check-lower`).classList.toggle('valid', PASSWORD_RULES.lower(password));
+  document.getElementById(`${prefix}-check-digit`).classList.toggle('valid', PASSWORD_RULES.digit(password));
+  document.getElementById(`${prefix}-check-special`).classList.toggle('valid', PASSWORD_RULES.special(password));
+}
 
 // 4 Exact Popular Categories with Real Images
 const POPULAR_CATEGORIES = [
@@ -416,20 +446,147 @@ async function refreshWallet() {
 
 async function handleDeposit(e) {
   e.preventDefault();
-  const amount = parseFloat(document.getElementById('deposit-amount-input').value);
-  if (!amount || amount <= 0) return;
+
+  const amountInput = document.getElementById('deposit-amount-input');
+  const depositBtn = document.getElementById('deposit-btn');
+
+  const amount = parseFloat(amountInput.value);
+
+  if (!amount || amount <= 0) {
+    showToast('Please enter a valid amount.', 'error');
+    return;
+  }
+
+  if (amount < 1) {
+    showToast('Minimum deposit amount is ₹1.', 'error');
+    return;
+  }
+
+  if (amount > 100000) {
+    showToast('Maximum deposit amount is ₹1,00,000.', 'error');
+    return;
+  }
 
   try {
-    await api('/api/wallet/deposit', {
+    depositBtn.disabled = true;
+    depositBtn.classList.add('loading');
+    depositBtn.textContent = 'Creating Order...';
+
+    // Step 1: Create Razorpay order on backend
+    const order = await api('/api/wallet/create-order', {
       method: 'POST',
-      body: JSON.stringify({ amount }),
+      body: JSON.stringify({ amount: amount }),
     });
-    showToast(`Deposited ₹${amount.toLocaleString('en-IN')}!`, 'success');
-    document.getElementById('deposit-amount-input').value = '';
-    refreshWallet();
-    loadTransactions();
+
+    if (!order || !order.orderId) {
+      throw new Error('Unable to create Razorpay order.');
+    }
+
+    // Step 2: Open Razorpay Checkout
+    const options = {
+      key: order.keyId,
+      amount: order.amount,
+      currency: order.currency || 'INR',
+
+      name: 'SafeExchange',
+      description: 'Wallet Deposit',
+
+      order_id: order.orderId,
+
+      handler: async function (response) {
+        try {
+          depositBtn.textContent = 'Verifying Payment...';
+
+          // Step 3: Verify payment on backend
+          await api('/api/wallet/verify-payment', {
+            method: 'POST',
+            body: JSON.stringify({
+              razorpayOrderId: response.razorpay_order_id,
+              razorpayPaymentId: response.razorpay_payment_id,
+              razorpaySignature: response.razorpay_signature
+            }),
+          });
+
+          amountInput.value = '';
+
+          showToast(
+            `₹${amount.toLocaleString('en-IN')} added to your wallet!`,
+            'success'
+          );
+
+          // Refresh wallet balance and transaction history
+          await refreshWallet();
+          await loadTransactions();
+
+        } catch (err) {
+          console.error('Payment verification failed:', err);
+
+          showToast(
+            err.message ||
+              'Payment verification failed. Please contact support.',
+            'error'
+          );
+
+        } finally {
+          depositBtn.disabled = false;
+          depositBtn.classList.remove('loading');
+          depositBtn.textContent = 'Pay Securely';
+        }
+      },
+
+      // User closes Razorpay popup
+      modal: {
+        ondismiss: function () {
+          depositBtn.disabled = false;
+          depositBtn.classList.remove('loading');
+          depositBtn.textContent = 'Pay Securely';
+
+          showToast('Payment cancelled.', 'error');
+        }
+      },
+
+      theme: {
+        color: '#10b981'
+      }
+    };
+
+    // Make sure Razorpay Checkout script loaded
+    if (typeof Razorpay === 'undefined') {
+      throw new Error(
+        'Razorpay Checkout failed to load. Please refresh the page.'
+      );
+    }
+
+    const razorpay = new Razorpay(options);
+
+    // Handle failed payment
+    razorpay.on('payment.failed', function (response) {
+      console.error('Razorpay payment failed:', response.error);
+
+      showToast(
+        response.error.description || 'Payment failed. Please try again.',
+        'error'
+      );
+
+      depositBtn.disabled = false;
+      depositBtn.classList.remove('loading');
+      depositBtn.textContent = 'Pay Securely';
+    });
+
+    // Open Razorpay popup
+    razorpay.open();
+
   } catch (err) {
-    showToast(err.message, 'error');
+    console.error('Razorpay order creation failed:', err);
+
+    showToast(
+      err.message || 'Unable to start payment.',
+      'error'
+    );
+
+    depositBtn.disabled = false;
+    depositBtn.classList.remove('loading');
+    depositBtn.textContent = 'Pay Securely';
   }
 }
 
@@ -554,6 +711,13 @@ function switchAuthMode(mode) {
   document.getElementById('auth-title').textContent = isLogin ? 'Sign In' : 'Create Account';
   document.getElementById('auth-submit-btn').textContent = isLogin ? 'Sign In →' : 'Register Account →';
   document.getElementById('auth-email-group').classList.toggle('hidden', isLogin);
+  document.getElementById('auth-forgot-link').classList.toggle('hidden', !isLogin);
+
+  const checklist = document.getElementById('password-checklist');
+  checklist.classList.add('hidden');
+  if (!isLogin) {
+    renderPasswordChecklist();
+  }
 }
 
 async function handleAuthSubmit(e) {
@@ -564,13 +728,26 @@ async function handleAuthSubmit(e) {
 
   try {
     if (state.authMode === 'register') {
+      if (!isPasswordValid(password)) {
+        showToast('Password must be 8+ chars with upper, lower, number & special character.', 'error');
+        return;
+      }
+
       await api('/api/auth/register', {
         method: 'POST',
         body: JSON.stringify({ username, email, password }),
       });
-      showToast('Account registered! Logging in...', 'success');
+
+      state.pendingVerificationEmail = email;
+      closeModal('modal-auth');
+      document.getElementById('otp-target-email').textContent = email;
+      document.getElementById('otp-code-input').value = '';
+      openModal('modal-otp');
+      showToast('Verification code sent to your email.', 'success');
+      return;
     }
 
+    // Login mode
     const data = await api('/api/auth/login', {
       method: 'POST',
       body: JSON.stringify({ username, password }),
@@ -586,6 +763,100 @@ async function handleAuthSubmit(e) {
     showToast(`Welcome, ${data.username}!`, 'success');
     refreshWallet();
     loadMarketplace();
+  } catch (err) {
+    showToast(err.message, 'error');
+  }
+}
+
+async function handleOtpSubmit(e) {
+  e.preventDefault();
+  const otp = document.getElementById('otp-code-input').value.trim();
+  const email = state.pendingVerificationEmail;
+
+  if (!email) {
+    showToast('Something went wrong — please register again.', 'error');
+    return;
+  }
+
+  try {
+    await api('/api/auth/verify-otp', {
+      method: 'POST',
+      body: JSON.stringify({ email, otp }),
+    });
+    closeModal('modal-otp');
+    state.pendingVerificationEmail = null;
+    showToast('Email verified! You can sign in now.', 'success');
+    openAuthModal('login');
+  } catch (err) {
+    showToast(err.message, 'error');
+  }
+}
+
+async function handleResendOtp() {
+  const email = state.pendingVerificationEmail;
+  if (!email) return;
+
+  try {
+    await api('/api/auth/resend-otp', {
+      method: 'POST',
+      body: JSON.stringify({ email }),
+    });
+    showToast('A new code has been sent.', 'success');
+  } catch (err) {
+    showToast(err.message, 'error');
+  }
+}
+
+function openForgotPasswordModal(e) {
+  if (e) e.preventDefault();
+  closeModal('modal-auth');
+  document.getElementById('forgot-step-email').classList.remove('hidden');
+  document.getElementById('forgot-step-reset').classList.add('hidden');
+  document.getElementById('forgot-title').textContent = 'Reset password';
+  document.getElementById('forgot-email').value = '';
+  openModal('modal-forgot-password');
+}
+
+async function handleForgotPasswordSubmit(e) {
+  e.preventDefault();
+  const email = document.getElementById('forgot-email').value.trim();
+
+  try {
+    await api('/api/auth/forgot-password', {
+      method: 'POST',
+      body: JSON.stringify({ email }),
+    });
+    state.pendingResetEmail = email;
+    document.getElementById('reset-target-email').textContent = email;
+    document.getElementById('forgot-step-email').classList.add('hidden');
+    document.getElementById('forgot-step-reset').classList.remove('hidden');
+    document.getElementById('forgot-title').textContent = 'Enter code & new password';
+    showToast('If that email is registered, a reset code has been sent.', 'success');
+  } catch (err) {
+    showToast(err.message, 'error');
+  }
+}
+
+async function handleResetPasswordSubmit(e) {
+  e.preventDefault();
+  const email = state.pendingResetEmail;
+  const otp = document.getElementById('reset-otp-input').value.trim();
+  const newPassword = document.getElementById('reset-new-password').value;
+
+  if (!isPasswordValid(newPassword)) {
+    showToast('Password must be 8+ chars with upper, lower, number & special character.', 'error');
+    return;
+  }
+
+  try {
+    await api('/api/auth/reset-password', {
+      method: 'POST',
+      body: JSON.stringify({ email, otp, newPassword }),
+    });
+    closeModal('modal-forgot-password');
+    state.pendingResetEmail = null;
+    showToast('Password reset! Please sign in.', 'success');
+    openAuthModal('login');
   } catch (err) {
     showToast(err.message, 'error');
   }

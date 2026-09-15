@@ -1,7 +1,10 @@
 package com.safeexchange.controller;
 
-import com.safeexchange.dto.DepositRequest;
+import com.safeexchange.dto.CreateRazorpayOrderRequest;
+import com.safeexchange.dto.RazorpayOrderResponse;
+import com.safeexchange.dto.VerifyPaymentRequest;
 import com.safeexchange.dto.WalletResponse;
+import com.safeexchange.service.RazorpayService;
 import com.safeexchange.service.WalletService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -17,17 +20,47 @@ import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 public class WalletController {
 
     private final WalletService walletService;
+    private final RazorpayService razorpayService;
 
     @GetMapping("/balance")
-    public ResponseEntity<WalletResponse> getBalance(Authentication authentication) {
-        WalletResponse response = walletService.getBalance(authentication.getName());
+    public ResponseEntity<WalletResponse> getBalance(
+            Authentication authentication
+    ) {
+
+        WalletResponse response =
+                walletService.getBalance(authentication.getName());
+
         return ResponseEntity.ok(response);
     }
 
-    @PostMapping("/deposit")
-    public ResponseEntity<WalletResponse> deposit(@Valid @RequestBody DepositRequest request,
-                                                  Authentication authentication) {
-        WalletResponse response = walletService.deposit(authentication.getName(), request);
+    @PostMapping("/create-order")
+    public ResponseEntity<RazorpayOrderResponse> createOrder(
+            @Valid @RequestBody CreateRazorpayOrderRequest request,
+            Authentication authentication
+    ) {
+
+        RazorpayOrderResponse response =
+                razorpayService.createOrder(
+                        authentication.getName(),
+                        request.amount()
+                );
+
         return ResponseEntity.ok(response);
+    }
+
+    @PostMapping("/verify-payment")
+    public ResponseEntity<String> verifyPayment(
+            @Valid @RequestBody VerifyPaymentRequest request,
+            Authentication authentication
+    ) {
+
+        razorpayService.verifyAndCreditWallet(
+                authentication.getName(),
+                request
+        );
+
+        return ResponseEntity.ok(
+                "Payment verified and wallet credited successfully"
+        );
     }
 }

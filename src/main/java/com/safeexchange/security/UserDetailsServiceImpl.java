@@ -25,6 +25,7 @@ public class UserDetailsServiceImpl implements UserDetailsService {
                 .withUsername(user.getUsername())
                 .password(user.getPassword())
                 .authorities(Collections.emptyList()) // no roles in MVP
+                .disabled(!user.isEmailVerified()) // blocks login until the registration OTP is verified
                 .build();
     }
 }
