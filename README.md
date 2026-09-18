@@ -1,145 +1,86 @@
 # SafeExchange 🔐
 
-A peer-to-peer digital asset escrow platform built with **Spring Boot**, designed to act as a trust layer for P2P transactions — funds/assets are held securely until both parties fulfill the agreed conditions.
+A platform where users can safely buy and sell digital assets from each other. Payments are held securely until both sides fulfill their end of the deal — no blind trust required.
 
----
+## 🚀 Overview
 
-## 📖 Overview
+SafeExchange solves a simple problem: when two strangers trade a digital asset online, how does either side know the other won't just disappear after getting paid (or after getting the asset)?
 
-SafeExchange solves a common problem in peer-to-peer transactions: **trust between strangers**. Instead of either party sending first and hoping the other follows through, SafeExchange holds the asset in escrow and releases it only when the agreed conditions are met — with built-in support for disputes.
+SafeExchange acts as a trusted middle layer:
+- The buyer's payment is locked as soon as they claim a listing.
+- The seller only gets paid once the buyer confirms they received the asset.
+- If something goes wrong, the transaction can be flagged/disputed instead of funds disappearing silently.
 
-This project was built to go beyond typical CRUD tutorials and explore real-world backend system design: state machines, secure authentication, and clean REST API design.
+## 🔄 How It Works
 
----
+1. **User logs in** — registration requires email OTP verification; login is blocked until the account is verified.
+2. **User chooses to sell or buy.**
+3. **Seller lists** a digital asset for sale.
+4. **Buyer finds the listing and claims it.**
+5. **Payment is held safely** by the platform (funded state).
+6. **Seller delivers** the asset.
+7. **Buyer confirms receipt** → payment is released to the seller.
 
-## ✨ Features
-
-- 🔑 **Stateless Authentication** — JWT-based auth with Spring Security
-- 🔁 **Escrow State Machine** — a finite-state-machine driven flow (`PENDING → FUNDED → RELEASED / DISPUTED`, etc.) that enforces valid transitions and prevents invalid state changes
-- 📦 **Domain-Driven Entities** — JPA entities modeling users, escrow transactions, and transaction states
-- 📄 **API Documentation** — fully documented REST endpoints via Swagger/OpenAPI
-- 🛡️ **Secure by Design** — stateless sessions, token-based access control
-
----
+Each transaction moves through a finite-state-machine-driven lifecycle (e.g. `pending → funded → released / disputed`), so the status of every deal is always well-defined.
 
 ## 🛠️ Tech Stack
 
-| Layer | Technology |
-|---|---|
-| Language | Java |
-| Framework | Spring Boot 4.1 |
-| Security | Spring Security + JWT |
-| Persistence | Spring Data JPA |
-| Database | MySQL |
-| API Docs | Swagger / OpenAPI |
-| Build Tool | Maven |
-
----
-
-## 🏗️ Architecture
-
-The project was built incrementally:
-
-1. **Project Setup** — Spring Boot 4.1 initialization
-2. **Domain Modeling** — JPA entities for users and escrow transactions
-3. **Security Layer** — stateless JWT authentication with Spring Security
-4. **Escrow Logic** — a finite-state-machine governing the escrow lifecycle
-5. **REST Controllers** — exposing the escrow and auth operations
-6. **API Documentation** — Swagger integration for endpoint discovery and testing
-
-```
-Client → REST Controller → Service Layer (FSM validation) → Repository → MySQL
-                ↑
-         JWT Auth Filter (Spring Security)
-```
-
----
-
-## 🔄 Escrow Flow
-
-A typical transaction moves through the following states:
-
-```
-PENDING → FUNDED → RELEASED
-              ↓
-          DISPUTED
-```
-
-- **PENDING** — escrow created, awaiting funding
-- **FUNDED** — asset/funds locked in escrow
-- **RELEASED** — funds released to the recipient after conditions are met
-- **DISPUTED** — either party raises a dispute, halting release until resolved
-
----
-
-## 📷 API Documentation
-
-Full API documentation is available via Swagger UI once the app is running:
-
-```
-http://localhost:8080/swagger-ui/index.html
-```
-
-
-
-
-<!-- ![Swagger UI](docs/swagger-ui.png) -->
-<img width="1317" height="639" alt="image" src="https://github.com/user-attachments/assets/7a990322-c4cf-4b3e-bcbd-39a9cd60ca64" />
-
----
-
-## 🚀 Getting Started
-
-### Prerequisites
-- Java 17+
-- Maven
+**Backend**
+- Spring Boot 4.1
+- Spring Security with stateless JWT authentication
+- JPA entities modeling the transaction domain
+- REST APIs documented with Swagger / OpenAPI
 - MySQL
 
-### Setup
+**Frontend**
+- Vault/ledger-themed UI
+- Wax-seal progress visual tracking each transaction stage
+- Login/register flow with email OTP verification
+- Forgot-password flow with password complexity rules
+
+**Other**
+- Gmail SMTP (App Password) for sending OTP emails
+
+## ✨ Features
+
+- 🔑 Secure JWT-based authentication
+- 📧 Email OTP verification required before login (no partial access for unverified users)
+- 🔁 Forgot-password flow
+- 🔒 Password complexity rules
+- 📦 Full transaction lifecycle management via FSM
+- 📄 Swagger/OpenAPI documentation for all endpoints
+- 🎨 Custom vault/ledger-inspired UI with live progress tracking
+
+## 📸 Screenshots
+
+<img width="1410" height="645" alt="image" src="https://github.com/user-attachments/assets/f4fcba28-59e9-4270-ad7a-20333b9fe59f" />
+
+## 📦 Getting Started
 
 ```bash
 # Clone the repository
-git clone https://github.com/kartikpareek1115/safeexchange.git
+git clone <repo-url>
 cd safeexchange
 
-# Configure your database in application.properties
-# spring.datasource.url=jdbc:mysql://localhost:3306/safeexchange_db
-# spring.datasource.username=your_username
-# spring.datasource.password=your_password
+# Configure application.properties / .env with your DB and Gmail SMTP credentials
 
-# Build and run
-mvn clean install
-mvn spring-boot:run
+# Run the backend
+./mvnw spring-boot:run
 ```
 
-The API will be available at `http://localhost:8080` and Swagger docs at `/swagger-ui/index.html`.
-
----
+Update the database name, JWT secret, and Gmail App Password in your config before running.
 
 ## 🗺️ Roadmap
 
-- [x] Spring Boot project setup
-- [x] JPA entities & database design
-- [x] JWT-based authentication
-- [x] Escrow FSM logic
-- [x] REST controllers
-- [x] Swagger API documentation
-- [ ] Frontend (vault/ledger themed UI)
-- [ ] Deployment
+- [ ] Dispute resolution flow
+- [ ] Admin dashboard
+- [ ] Transaction history / analytics
+- [ ] Deployment (cloud hosting)
 
----
+## 🤝 Feedback
 
-## 👤 Author
-
-**Kartik Pareek** (Void)
-B.Tech CSE, LNCT Indore
-Java Backend Developer
-
-- GitHub: (https://github.com/kartikpareek1115)
-- LinkedIn: (https://linkedin.com/in/kartikpareekofficial)
-
----
+Built as a portfolio project to go beyond CRUD tutorials and understand real-world transaction/trust system design. Feedback from anyone who has built similar systems is very welcome!
 
 ## 📄 License
 
-This project is open source and available under the [MIT License](LICENSE).
+This project is open source. Feel free to explore, fork, or reach out with suggestions.
