@@ -37,3 +37,10 @@ build/
 
 ### Mac OS ###
 .DS_Store
+
+### IDE settings (can contain run configs with secrets) ###
+.idea/
+
+### Secrets ###
+.env
+*.env
